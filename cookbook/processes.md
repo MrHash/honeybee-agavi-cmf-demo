@@ -83,7 +83,7 @@ We start by writing a process state machine to define how to handle entity state
 
 This state machine configuration handles the `deleted` state propagation for all projections. Now we make the process globally available across the application by adding the following snippet to our services configuration.
 
-######app/config/services.xml
+######app/config/services.xml (snippet)
 ```xml
 <ae:configuration>
     <service_map>
