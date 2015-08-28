@@ -43,8 +43,8 @@ SendEnv LANG LC_* GIT_*
 
 * To create a new project and VM from this template using `composer`:
 ```shell
-composer.phar create-project -sdev --dev --ignore-platform-reqs --no-install \
-honeybee/honeybee-agavi-cmf-demo <your-honeybee-project-dir>
+composer.phar create-project -sdev --ignore-platform-reqs --no-install \
+honeybee/honeybee-agavi-cmf-demo honeybee-agavi-cmf-demo
 ```
 You will be prompted for for some information to configure the VM.
 
@@ -58,15 +58,9 @@ vagrant up # this will take a while, time to grab a coffee
 ```shell
 vagrant ssh
 cd /srv/www/honeybee-agavi-cmf-demo.local/
-make install
+composer install #install project when prompted
 sudo service nginx restart
 ```
-
-In the end you'll be prompted for some infos. Here are some answers, that are suitable for development:
-
-* Base-url: `https://honeybee-agavi-cmf-demo.local/`
-* Environment: `development`
-* Enable testing: `y`
 
 #### Mounting the source
 
@@ -83,14 +77,14 @@ and is ready for development.
 
 Run the migrations to complete the setup:
 ```shell
-make migrate-all
+composer migration-run -- --all
 ```
 
 #### Creating the first system account user/admin
 
 The first user within the system must be created via command line using:
 ```shell
-make user
+composer user-create
 ```
 
 This will give an output similar to:
@@ -116,7 +110,6 @@ The following services are running on the cms devbox and are controlled via syst
     * web-status: https://honeybee-agavi-cmf-demo.local/converjon/status
 * nginx
     * cms http-endpoint: https://honeybee-agavi-cmf-demo.local/
-* php-fpm
 
 In order to start/stop services or get the status use the corresponding sudo command within the devbox, e.g.:
 ```shell
