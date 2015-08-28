@@ -69,23 +69,23 @@
     
     "scripts": {
         "test": [
-            "echo \"\nRunning unit tests ...\n\"",
+            "echo \"Running unit tests ...\"",
             "./vendor/bin/phpunit --colors ./testing"
         ],
         "code-sniffer": [
-            "echo \"\nRunning codesniffer to check for PSR-2 compatibility ...\n\"",
+            "echo \"Running codesniffer to check for PSR-2 compatibility ...\"",
             "./vendor/bin/phpcs --extensions=php --standard=psr2 ./app/lib ./app/modules ./testing"
         ],
         "api-doc": [
-            "echo \"\nRunning Sami to generate docs ...\n\"",
+            "echo \"Running Sami to generate docs ...\"",
             "if [ -d ./build/docs ]; then rm -rf ./build/docs; fi",
             "vendor/sami/sami/sami.php --ansi update app/config/sami.php"
         ],
         "build": [
             "if [ -d ./build/logs ]; then rm -rf ./build/logs; fi",
             "mkdir -p ./build/logs",
-            "./bin/composer.phar test",
-            "./bin/composer.phar code-sniffer"
+            "composer test",
+            "composer code-sniffer"
         ],
         "post-root-package-install": [
             "HoneybeeExtensions\\Composer\\ProjectHandler::postRootPackageInstall"
@@ -133,6 +133,9 @@
             "HoneybeeExtensions\\Composer\\ConfigurationHandler::buildConfig",
             "HoneybeeExtensions\\Composer\\ResourceHandler::buildResource",
             "HoneybeeExtensions\\Composer\\ConfigurationHandler::buildConfig"
+        ],
+        "env-recreate": [
+            "HoneybeeExtensions\\Composer\\ProjectHandler::recreateEnvironment"
         ],
         "config-build": [
             "HoneybeeExtensions\\Composer\\ConfigurationHandler::buildConfig"
