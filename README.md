@@ -58,7 +58,7 @@ vagrant up # this will take a while, time to grab a coffee
 ```shell
 vagrant ssh
 cd /srv/www/honeybee-agavi-cmf-demo.local/
-composer install #install project when prompted
+composer install
 sudo service nginx restart
 ```
 
@@ -77,7 +77,7 @@ and is ready for development.
 
 Run the migrations to complete the setup:
 ```shell
-composer migration-run -- --all
+composer migrate-all
 ```
 
 #### Creating the first system account user/admin
