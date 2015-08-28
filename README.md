@@ -59,6 +59,7 @@ vagrant up # this will take a while, time to grab a coffee
 vagrant ssh
 cd /srv/www/honeybee-agavi-cmf-demo.local/
 composer install
+# when prompted you should accept the project installation
 sudo service nginx restart
 ```
 
