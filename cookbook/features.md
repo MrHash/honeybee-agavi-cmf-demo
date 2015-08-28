@@ -23,6 +23,8 @@ An Elasticsearch index is created for each bounded context, although you are fre
 
 It is possible to replace or augment this database with the storage technology of your choice.
 
+##Immutability
+
 ##Modular Architecture
 
 ##Framework Bindings
