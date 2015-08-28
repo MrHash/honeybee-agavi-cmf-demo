@@ -1,9 +1,9 @@
 #Processes
-Processes are configurable state machine driven operations that are performed according to a set of conditions. They are typicall triggered by certain events occurring in the system. 
+Processes are configurable state machine driven operations that are performed according to a set of conditions. They are typically triggered by specific events occurring in the system. 
 
-So far we have already [configured an event handler](./event_handling.md) to synchronise referenced entity data in our projections. This is sufficient for mirroring values but in the case of state changes, they are not cascaded to the related entities. This would mean that deleting an *owner* would not mark her *topics* as deleted, and the *owner* reference does not exist in the *topic* so they are not changed at all. In order to handle this we will configure a process to propagate workflow state changes.
+So far we have already [configured an event handler](./event_handling.md) to synchronise referenced entity data in our projections. This is sufficient for mirroring values but in the case of workflow state changes, they are not cascaded to the referencing entities. This would mean that deleting an *owner* would not mark its *topics* as deleted, and since the *owner* reference does not exist in the *topic* no changes are made to that projection. In order to handle this we will define a process to propagate workflow state changes.
 
-We start by writing a process state machine to define how to handle entity state propagation.
+We start by writing a process state machine which defines how to handle entity state propagation.
 
 ######process/state_propagation.xml
 ```xml
@@ -14,7 +14,7 @@ We start by writing a process state machine to define how to handle entity state
 <state_machines xmlns="urn:schemas-workflux:statemachine:0.5.0">
     <state_machine name="state_propagation_process">
         <!-- 
-            Initial state which evaluates the incoming event state change and 
+            Initial state evaluates the incoming event state change and 
             proceeds to the appropriate next or final state.
         -->
         <initial name="check_origin_state">
@@ -31,7 +31,7 @@ We start by writing a process state machine to define how to handle entity state
         </initial>
 
         <!-- 
-            This state executes our custom state class and provides mappings to 
+            This state executes our designated state class and provides settings to 
             determine how to act on the current entity given the incoming state change.
         -->
         <state name="propagate_state" class="&propagate_state_transition;">
@@ -42,8 +42,8 @@ We start by writing a process state machine to define how to handle entity state
             
             <!--
                 e.g. if the entity undergoing processing is an *Account* and the 
-                state of the incoming event is 'deleted' then we proceed execute
-                'delete' event on the account.
+                state of the incoming event is 'deleted' then we proceed to execute
+                'delete' event on the account workflow.
             -->
             <option name="transition_map">
                 <option name="hbdemo.commenting.account">
@@ -58,8 +58,8 @@ We start by writing a process state machine to define how to handle entity state
             </option>
             
             <!--
-                For convenience the command map specifies the command to create if 
-                the workflow state needs to be proceeded.
+                For convenience the command map specifies the command to create when 
+                a workflow state needs to be proceeded.
             -->
             <option name="command_map">
                 <option name="hbdemo.commenting.account">
@@ -110,7 +110,7 @@ This state machine configuration handles the `deleted` state propagation for all
 </ae:configuration>
 ```
 
-Now we can hook up the event handler for each resource to use this process.
+Now we can hook up the event handler for each resource to use this process. 
 
 ######config/Account/events.xml
 ```xml
@@ -162,3 +162,33 @@ Now we can hook up the event handler for each resource to use this process.
 ```
 
 Compared to the event handling configuration based on the `RelationProjectionUpdater`, the difference here is we specify a `RelationStateProjectionProcessor` which executes the process `state_propagation_process`.
+
+The remaining event handlers looks similar.
+
+######config/Topic/events.xml (snippet)
+```xml
+<subscription enabled="true">
+    <transport>sync</transport>
+    <filter>
+        <setting name="expression">&hbdemo_commenting_topic_related_entity_events;</setting>
+    </filter>
+    <handler implementor="\HBDemo\Commenting\StateMachine\RelationStateProjectionProcessor">
+        <setting name="projection_type">hbdemo.commenting.topic</setting>
+        <setting name="process_name">state_propagation_process</setting>
+    </handler>
+</subscription>
+```
+
+######config/Comment/events.xml (snippet)
+```xml
+<subscription enabled="true">
+    <transport>sync</transport>
+    <filter>
+        <setting name="expression">&hbdemo_commenting_comment_related_entity_events;</setting>
+    </filter>
+    <handler implementor="\HBDemo\Commenting\StateMachine\RelationStateProjectionProcessor">
+        <setting name="projection_type">hbdemo.commenting.comment</setting>
+        <setting name="process_name">state_propagation_process</setting>
+    </handler>
+</subscription>
+```
