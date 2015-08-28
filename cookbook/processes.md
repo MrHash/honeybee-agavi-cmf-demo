@@ -80,3 +80,85 @@ We start by writing a process state machine to define how to handle entity state
 </state_machines>
 
 ```
+
+This state machine configuration handles the `deleted` state propagation for all projections. Now we make the process globally available across the application by adding the following snippet to our services configuration.
+
+######app/config/services.xml
+```xml
+<ae:configuration>
+    <service_map>
+        <service_definitions>
+            <service name="honeybee.infrastructure.process_map">
+                <class>Honeybee\Infrastructure\ProcessManager\ProcessMap</class>
+                <provisioner>
+                    <class>Honeybee\FrameworkBinding\Agavi\Provisioner\ProcessMapProvisioner</class>
+                    <settings>
+                        <setting name="processes">
+                            <setting name="state_propagation_process">
+                                <setting name="state_machine_builder">Honeybee\Infrastructure\ProcessManager\StateMachine\StateMachineBuilder</setting>
+                                <setting name="builder_settings">
+                                    <setting name="state_machine_definition">%core.modules_dir%/HBDemo_Commenting/process/state_propagation.xml</setting>
+                                    <setting name="name">state_propagation_process</setting>
+                                </setting>
+                            </setting>
+                        </setting>
+                    </settings>
+                </provisioner>
+            </service>
+        </service_definitions>
+    </service_map>
+</ae:configuration>
+```
+
+Now we can hook up the event handler for each resource to use this process.
+
+######config/Account/events.xml
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE shortcuts [
+    <!ENTITY hbdemo_commenting_account_related_entity_events
+    'event.getType() matches "/^hbdemo\.commenting\.owner\..*/"'>
+]>
+<ae:configurations
+    xmlns:ae="http://agavi.org/agavi/config/global/envelope/1.0"
+    xmlns="http://berlinonline.de/schemas/honeybee/config/event_bus/1.0"
+    xmlns:env="http://berlinonline.de/schemas/honeybee/config/envelope/definition/1.0"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+>
+    <ae:configuration>
+        <event_bus>
+            <channels>
+                <channel name="honeybee.events.domain">
+                    <subscriptions>
+                        <subscription enabled="true">
+                            <transport>sync</transport>
+                            <filter>
+                                <setting name="expression">&hbdemo_commenting_account_related_entity_events;</setting>
+                            </filter>
+                            <handler implementor="\HBDemo\Commenting\StateMachine\RelationStateProjectionProcessor">
+                                <setting name="projection_type">hbdemo.commenting.account</setting>
+                                <setting name="process_name">state_propagation_process</setting>
+                            </handler>
+                        </subscription>
+                    </subscriptions>
+                </channel>
+
+                <channel name="honeybee.events.replay">
+                    <subscription>
+                        <transport>sync</transport>
+                        <filter>
+                            <setting name="expression">&hbdemo_commenting_account_related_entity_events;</setting>
+                        </filter>
+                        <handler implementor="\Honeybee\Projection\EventHandler\RelationProjectionUpdater">
+                            <setting name="projection_type">hbdemo.commenting.account</setting>
+                        </handler>
+                    </subscription>
+                </channel>
+            </channels>
+        </event_bus>
+    </ae:configuration>
+
+</ae:configurations>
+```
+
+Compared to the event handling configuration based on the `RelationProjectionUpdater`, the difference here is we specify a `RelationStateProjectionProcessor` which executes the process `state_propagation_process`.
